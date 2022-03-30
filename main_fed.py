@@ -9,6 +9,7 @@ import torch
 import time
 import sympy
 from sympy import Integral, Symbol, exp, S
+import math
 
 from models.flatten_params import flatten_params
 from models.recover_flattened import recover_flattened
@@ -217,7 +218,7 @@ if __name__ == '__main__':
         #  .....
         # w_locals[99]= w_glob
         # 글로벌 파라미터들을 각 로컬들에게 전송하는 개념
-
+    args.po=10**(args.po/10)
     for iter in range(args.epochs):
 
 
@@ -342,6 +343,8 @@ if __name__ == '__main__':
         acc_test.append(test_accuracy)
 
         print("time:", time.time() - start)
+        if math.isnan(test_loss):
+            break
 
 
     # # plot loss curve

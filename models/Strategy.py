@@ -19,6 +19,7 @@ sys.path.append(__file__)
 
 from  models import vampyre as vp
 from csvec import CSVec
+import random
 
 import operator as op
 from functools import reduce
@@ -807,6 +808,12 @@ def Fedtopk(w, previous_w_global, T, P, g_ec,po,device,add_error,lr):
         SP = torch.ones(d).to(device)
         SP[indexing]=0
 
+
+        while sum(SP)!=2*T:
+            if sum(SP)>2*T:
+                SP[random.choice(torch.nonzero(SP))]=0
+            elif sum(SP)<2*T:
+                SP[random.choice(torch.nonzero(torch.ones(d).to(device)-SP))]=1
         # SP의 포지션 인덱스 값
         Sp=torch.nonzero(SP).reshape(2*T)
         NSp.append(Sp)
@@ -1058,7 +1065,12 @@ def FedAnalogPSGuide(w, previous_w_global, T, P, g_ec,po,device, K, add_error,lr
     # 1,0으로 표현하기
     SP = torch.ones(d).to(device)
     SP[indexing]=0
-
+    
+    while sum(SP)!=2*T:
+            if sum(SP)>2*T:
+                SP[random.choice(torch.nonzero(SP))]=0
+            elif sum(SP)<2*T:
+                SP[random.choice(torch.nonzero(torch.ones(d).to(device)-SP))]=1
     # SP의 포지션 인덱스 값
     Sp=torch.nonzero(SP).reshape(2*T)
 
@@ -1236,7 +1248,6 @@ def FedAnalogOneDeviceGuide(w, previous_w_global, T, P, g_ec,po,device, K, add_e
             break
     # 최종 q_t 개수: while문에서 마지막에 1 더해진 값 뺴기
     qt -= 1
-    qt=d-qt
     #채널 에러 방지
     
     
@@ -1268,6 +1279,14 @@ def FedAnalogOneDeviceGuide(w, previous_w_global, T, P, g_ec,po,device, K, add_e
                 # 1,0으로 표현하기
                 SP = torch.ones(d).to(device)
                 SP[indexing]=0
+
+                while sum(SP)!=qt:
+                    if sum(SP)>qt:
+                        SP[random.choice(torch.nonzero(SP))]=0
+                    elif sum(SP)<qt:
+                        SP[random.choice(torch.nonzero(torch.ones(d).to(device)-SP))]=1
+                
+                
                 RI=torch.nonzero(torch.ones(d).to(device)-SP).reshape(d-qt)
                 Sp=np.random.choice(RI.to(device='cpu'),2*T2-qt,replace=False)
                 Sp=torch.tensor(Sp).to(device)
@@ -1283,6 +1302,16 @@ def FedAnalogOneDeviceGuide(w, previous_w_global, T, P, g_ec,po,device, K, add_e
                 # 1,0으로 표현하기
                 SP = torch.ones(d).to(device)
                 SP[indexing]=0
+
+                while sum(SP)!=qt:
+                    if sum(SP)>qt:
+                        SP[random.choice(torch.nonzero(SP))]=0
+                    elif sum(SP)<qt:
+                        SP[random.choice(torch.nonzero(torch.ones(d).to(device)-SP))]=1
+
+
+
+
                 RI=torch.nonzero(torch.ones(d).to(device)-SP).reshape(d-qt)
                 Sp=np.random.choice(RI.to(device='cpu'),2*T2-qt,replace=False)
                 Sp=torch.tensor(Sp).to(device)
@@ -1298,6 +1327,13 @@ def FedAnalogOneDeviceGuide(w, previous_w_global, T, P, g_ec,po,device, K, add_e
             # 1,0으로 표현하기
             SP = torch.ones(d).to(device)
             SP[indexing]=0
+
+            while sum(SP)!=2*T2:
+                    if sum(SP)>2*T2:
+                        SP[random.choice(torch.nonzero(SP))]=0
+                    elif sum(SP)<2*T2:
+                        SP[random.choice(torch.nonzero(torch.ones(d).to(device)-SP))]=1
+
             Sp=torch.nonzero(SP).reshape(2*T2).to(device)
             compressed_gradient = torch.zeros(len(w), 2 * T2).to(device)
 
@@ -1320,11 +1356,7 @@ def FedAnalogOneDeviceGuide(w, previous_w_global, T, P, g_ec,po,device, K, add_e
         # 에러보존 여부
         if add_error=='True':
             g_ec[i] = OG[i] - pattern_gradient[i]
-            if i==Index:
-                if qt==0:
-                    g_ec[i] = OG[i] - pattern_gradient[i]
-                else:
-                    g_ec[i] = OG[i]
+            
 
 
 
@@ -1786,6 +1818,8 @@ def Fed_DDSGD(w, previous_w_global,T,P,g_ec,po, device,lr):
     
     while nCr(d, qt) < 2**(int(capacity)-33):
         qt += 1
+        if qt>d:
+            break
     # 최종 q_t 개수: while문에서 마지막에 1 더해진 값 뺴기
     qt -= 1
     #채널 에러 방지
